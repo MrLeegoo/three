@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        html,body{
+            width:100%;
+            height:100%;
+            margin:0;
+
+        }
+        body{
+            /*background:#000000;*/
+        }
+
+    </style>
+    <script src="./lib/cuon-utils.js"></script>
+    <script id="shader-vs" type="x-shader/x-vertex">
+       void main(void) {
+       gl_Position = vec4(0.0,0.0,0.0,1.0);
+       gl_PointSize = 10.0;
+       }
+    </script>
+
+    <script id="shader-fs" type="x-shader/x-vertex">
+       void main(void) {
+       gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+       }
+    </script>
+</head>
+<body>
+  <canvas id="context" width="1000" height="600" style="border:1px green solid;margin:100px auto"></canvas>
+  <button id="demo">click</button>
+  <script>
+      var webgl = document.getElementById('context');
+
+      //创建场景
+      var gl = webgl.getContext('webgl',{
+         alpha:true,//值为true，表示为上下文创建一个Alpha通道缓冲区；默认值为true；
+        depth:true,//值为true，表示可以使用16位深缓冲区；默认值为true；
+        stencil:false,//值为true，表示可以使用8位模板缓冲区；默认值为false；
+        antialias:true,//值为true，表示将使用默认机制执行抗锯齿操作；默认值为true。
+        premultipliedAlpha:true,//值为true，表示绘图缓冲区有预乘Alpha值；默认为true;
+        preserveDrawingBuffer:false,//值为true；表示在绘图完成后保留绘图缓冲区；默认值为false。
+      })
+      gl.clearColor(0.0,1.0,0.0,1.0);//设定背景色
+      gl.clear(gl.COLOR_BUFFER_BIT);//用指定的背景色清空绘图区域
+      //绘制一个点
+      /**着色器，可以理解为运行在显卡中的指令和数据。
+       完整的着色器包括顶点着色器和片元着色器。顶点着色器最基本的任务是接收三维空间中点的坐标，将其处理为二维空间中的坐标并输出；片元着色器最基本的任务是对需要处理的屏幕上的每个像素输出一个颜色值；
+       将顶点着色器输出的二维空间中的点坐标，转化为需要处理的像素并传递给片元着色器的过程，称为图元光栅化。
+       1.顶点着色器
+       顶点着色器接受attribute变量和uniform变量。attribute变量存储着关于点本身的数据，其中最重要的当然是点的位置。
+       uniform变量存储的数据仅仅帮助着色器完成任务，
+       换言之，着色器仅仅是需要uniform变量而并不处理他们。顶点着色器需要输出varying变量给片元着色器。
+       id="shader-vs" type="x-shader/x-vertex">
+       attribute vec3 aVertexPosition;
+       uniform mat4 uMVMatrix;
+       uniform mat4 uPMatrix;
+       void main(void) {
+       gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+       2.片元着色器
+       片元着色器的唯一任务是，给出屏幕上每个像素的颜色。片元着色器接受varying变量——正是顶点着色器的输出，
+       但是不完全一样。交给片元着色器的处理单元不是顶点，而是像素，将顶点转化为像素的技术称为“图元光栅化
+       precision mediump float;
+       void main(void) {
+       gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+       }
+
+
+       */
+      /**
+       * 缓冲区
+       缓冲区是驻存于内存中的javascript对象，存储着即将推送到着色器中的attribute对象。
+       最常用的attribute对象莫过于记录了空间中点位置信息的aVertexPosition了。缓冲区如同一个长长的队列，着色器每处理完一个顶点（或和顶点对应的其他attribute对象），缓冲区就提供下一个顶点给着色器处理。
+       / 创建缓冲区
+       vertexPositionBuffer = gl.createBuffer();
+       // 绑定缓冲区为“当前缓冲区”
+       gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+       // 为缓冲区填充数据
+       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+       gl.viewport
+       gl.deleteBuffer()释放内存。
+       */
+
+      /**
+       * 初始化着色器
+       */
+      console.dir(document.getElementById('shader-vs'))
+       if(initShaders(gl,document.getElementById('shader-vs').textContent,document.getElementById('shader-fs').textContent)){
+           console.log(gl)
+       }
+
+      /**
+       * 绘制gl.drawArrays(mode,first,count)
+       * 执行顶点着色器，按照mode参数指定方式绘制图形
+       * mode:指定方式绘制，可接受以下常量：gl.POINTS;gl.LINES,gl.LINE_STRIP,gl.LINE_LOOP,gl.TRIangles,gl.TRIANGLES,gl.TRIANGLE_STRIP，gl.TRIANGLE_FAN
+       * first:从哪个顶点开始绘制
+       * count:指定绘制需要多少个顶点
+       */
+
+      gl.drawArrays(gl.POINTS,0,1)
+
+
+
+
+  </script>
+</body>
+</html>
