@@ -17,22 +17,35 @@
     </style>
     <script src="./lib/cuon-utils.js"></script>
     <script id="shader-vs" type="x-shader/x-vertex">
+       attribute vec4 a_Position;
        void main(void) {
-       gl_Position = vec4(0.0,0.0,0.0,1.0);
+       gl_Position = a_Position;
        gl_PointSize = 10.0;
        }
     </script>
 
     <script id="shader-fs" type="x-shader/x-vertex">
+      precision mediump float;
+      uniform vec4 u_FragColor;
        void main(void) {
-       gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+       gl_FragColor = u_FragColor;
        }
     </script>
 </head>
 <body>
-  <canvas id="context" width="1000" height="600" style="border:1px green solid;margin:100px auto"></canvas>
+  <canvas id="context" width="1000" height="600" style="border:1px green solid;display:block;margin:100px auto"></canvas>
   <button id="demo">click</button>
   <script>
+
+      /**
+       * 1、获取webgl上下文
+       * 2、初始化着色器initShaders
+       * 3、设置点的坐标信息：创建缓冲区储物顶点信息;可以一次性写入多个点
+       * 4、设置cavas 背景色 gl.clearColor();
+       * 5、清空canvas gl.clear()
+       * 6、绘制gl.drawArrays()
+       */
+
       var webgl = document.getElementById('context');
 
       //创建场景
@@ -72,17 +85,40 @@
        */
       /**
        * 缓冲区
-       缓冲区是驻存于内存中的javascript对象，存储着即将推送到着色器中的attribute对象。
-       最常用的attribute对象莫过于记录了空间中点位置信息的aVertexPosition了。缓冲区如同一个长长的队列，着色器每处理完一个顶点（或和顶点对应的其他attribute对象），缓冲区就提供下一个顶点给着色器处理。
-       / 创建缓冲区
-       vertexPositionBuffer = gl.createBuffer();
-       // 绑定缓冲区为“当前缓冲区”
-       gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+       * 缓冲区是驻存于内存中的javascript对象，存储着即将推送到着色器中的attribute对象。
+       *最常用的attribute对象莫过于记录了空间中点位置信息的aVertexPosition了。缓冲区如同一个长长的队列，着色器每处理完一个顶点（或和顶点对应的其他attribute对象），缓冲区就提供下一个顶点给着色器处理。
+       *  1、创建缓冲区
+       *  vertexPositionBuffer = gl.createBuffer();
+       *  2、绑定缓冲区为“当前缓冲区” 当前缓冲区才能被使用
+       *    gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+       *  3、向缓冲区对象写入数据
+       *  gl.bufferData(gl.ARRY_BUFFER,vertices,gl.STATIC_DRAW)
+       *  4、将缓冲区对象分配给attribute变量
+       *  gl.vertexAttribPointer(locaton,size,type,normalized,stride,offset);
+       *  5、开启变量
+       *  gl.enableVertexAttribArray
+
        // 为缓冲区填充数据
        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
        gl.viewport
        gl.deleteBuffer()释放内存。
        */
+
+        function initVertexBuffers(gl){
+            var vertices = new Float32Array([0.0, 0.5, -0.5, -0.5,-0.5,0.5,
+                0.2, 0.2, -0.4, -0.2,-0.3,0.1
+            ]);//顶点坐标
+            var n=3;//点个数
+            var vertexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW)
+          var a_Position = gl.getAttribLocation(gl.program,'a_Position');
+          gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,0,0);
+          gl.enableVertexAttribArray(a_Position);
+          return n;
+
+
+      }
 
       /**
        * 初始化着色器
@@ -92,6 +128,25 @@
            console.log(gl)
        }
 
+
+      /**
+       * 顶点
+       * 获取a_Position变量存储位置gl.getAttribLocation(gl.program,'a_Position');
+       * gl.program: 程序对象包含了顶点和片元着色器
+       */
+
+      var a_Position = gl.getAttribLocation(gl.program,'a_Position');
+      console.log(1,a_Position)
+      /**
+       * 将顶点位置传输给attribute变量gl.vertexAttrib3f
+       */
+//      gl.vertexAttrib3f(a_Position,0.0,0.0,0.0)
+      /**
+       * 获取a_Position变量存储位置gl.getAttribLocation(gl.program,'a_Position');
+       */
+      var u_FragColor = gl.getUniformLocation(gl.program,'u_FragColor');
+      gl.uniform4f(u_FragColor,1.0,1.0,0.0,1.0)
+
       /**
        * 绘制gl.drawArrays(mode,first,count)
        * 执行顶点着色器，按照mode参数指定方式绘制图形
@@ -100,10 +155,14 @@
        * count:指定绘制需要多少个顶点
        */
 
-      gl.drawArrays(gl.POINTS,0,1)
 
-
-
+      var count =initVertexBuffers(gl)
+      gl.drawArrays(gl.TRIANGLE_FAN,0,6)
+      webgl.addEventListener("click",function(e){
+          console.log(e.clientX,e.clientY)
+          console.log(e.offsetX,e.offsetY)
+          console.dir(this.getBoundingClientRect())
+      })
 
   </script>
 </body>

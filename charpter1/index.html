@@ -2,46 +2,148 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>场景，模型，光照，位置变换</title>
+    <title>场景，模型，光照，变换,位置偏移</title>
     <script src="../three.min.js"></script>
 </head>
 <body>
 
 <script>
-
+    if (!window.requestAnimationFrame) {
+        window.requestAnimationFrame = (function() {
+            return window.requestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                window.oRequestAnimationFrame ||
+                window.msRequestAnimationFrame ||
+                function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
+                    window.setTimeout(callback, 1000/60);
+                };
+        })();
+    }
     /**
      * 3大组建：场景（scene）、相机（camera）和渲染器（renderer）
      */
     var scene  = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000);
-    var renderer = new THREE.WebGLRenderer();
-    renderer.setClearColor(0x000000, 1.0);
+    var camera = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000,1.5);
+    var renderer = new THREE.WebGLRenderer({
+        antialias:true
+    });
+    renderer.setClearColor(0xeeeeee, 1.0);
     renderer.setSize(window.innerWidth,window.innerHeight);
-    camera.position.z = 151; //注意，相机位置必须大于最近点
-    camera.position.y = 15
+//    renderer.shadowMapEnabled = true;//开启阴影
+    document.body.appendChild(renderer.domElement);
 
     /**
+     * 雾化，场景使用同一材质
+     */
+//    scene.fog=new THREE.Fog(0x00f000,100,1000)
+//    scene.overrideMaterial = new THREE.MeshLambertMaterial({color:0x7777ff})
+
+    /**
+     * 相机基本概念，上方向，焦点，上方向设置在焦点之前
+     * 正交摄像机，透视摄像机
+     */
+    camera.position.y = 200;
+    camera.position.z = 350; //注意，相机位置必须大于最近点
+    camera.position.x = 0;
+//    camera.position.y = 400;
+    camera.up.x = 0;//相机以哪个方向为上方
+    camera.up.y = 1;
+    camera.up.z = 0;
+    camera.lookAt(0,0,0)
+
+    function setCameraFov(fov)
+    {
+        camera.fov = fov;
+        camera.updateProjectionMatrix();
+    }
+    function initGrid(){
+        var helper = new THREE.GridHelper( 1000, 40 , 0x0000ff, 0x808080);
+//        helper.setColors( 0x808080, 0x808080 );
+        scene.add( helper );
+    }
+    /**
      * 三维对象：平面，方块，球体，摄像机，轴
+     * 注意，模型看不见原因很可能是模型位置在摄像机外，或者相机在模型体内
      */
     var axes = new THREE.AxesHelper(200);
     scene.add(axes)
-    renderer.render(scene,camera)
-    document.body.appendChild(renderer.domElement);
-//    var planeGeometry = new THREE.PlaneGeometry(60,20,1,1)
-//    var planeMaterial = new THREE.MeshBasicMaterial({color:0xff0000});
-//    var plane = new THREE.Mesh(planeGeometry,planeMaterial);
-//    scene.add(plane);
-//    var light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
-//    light.position.set(100, 100, 200);
-//    scene.add(light);
+
+
+
+   /**
+    *创建几何体
+    */
+    var sphereGemometry = new THREE.SphereGeometry(20,40,40)
+    sphereGemometry.translate(100,0,0)
+    var sphereMaterial = new THREE.MeshLambertMaterial({color:0xffffff});
+    /**
+     *创建网格Mesh  支持postion,rotation,visible,
+     */
+    var sphere = new THREE.Mesh(sphereGemometry,sphereMaterial);
+    sphere.position.y=20;
+    sphere.castShadow=true;
+//    sphere.translateOnAxis(new THREE.Vector3(1,0,0),100);
+    scene.add(sphere)
+    /**
+     * 添加线框两种方式
+     * THREE.SceneUtils.createMultiMaterialObject
+     * HREE.WireframeHelper
+     */
+    var sphereWireframe = new THREE.WireframeHelper(sphere,0x000000);
+    scene.add(sphereWireframe);
+
+    var materials = [
+        new THREE.MeshLambertMaterial({color:0xffffff}),
+        new THREE.MeshBasicMaterial({color:0x000000,wireframe:true})
+    ]
+
+    var meshGroup = THREE.SceneUtils.createMultiMaterialObject(sphereGemometry,materials );
+    meshGroup.position.y=20;
+    console.log(meshGroup)
+
+    scene.add(meshGroup)
+    var planeGemometry = new THREE.PlaneGeometry(460,360);
+    var planeMaterial = new THREE.MeshLambertMaterial({color:0xffffff});
+
+    var plan = new THREE.Mesh(planeGemometry,planeMaterial);
+    plan.receiveShadow=true;
+    plan.rotation.x=-Math.PI/2
+    console.log(plan)
+    scene.add(plan)
+    var spotLight = new THREE.SpotLight(0xffffff);
+    spotLight.position.set(0,200,0);
+    spotLight.castShadow=true;
+    scene.add(spotLight)
+
+
+       var circleMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+        var geometry = new THREE.CircleGeometry(40, 64);
+    geometry.vertices.shift();
+    this.scene.add(new THREE.Line(geometry, circleMaterial));
+    var directLight = new THREE.DirectionalLight(0xffffff);
+
+    var ambientLight = new THREE.AmbientLight(0x0c0c0c);
+    scene.add(ambientLight)
+
+//    scene.add(directLight)
+
+    initGrid()
+
+    /**
+     * 动画
+     *
+     */
 
     var animate = function () {
-        requestAnimationFrame( animate );
 
-        axes.rotation.y += 0.01;
 
+
+
+        meshGroup.rotation.y+=0.03
 
         renderer.render( scene, camera );
+        requestAnimationFrame( animate );
     };
 
     animate();
