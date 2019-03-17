@@ -20,6 +20,7 @@
         initMesh();
         initLight();
         animate();
+        intRay();
     }
     /**
      * 一、3大组建：场景（scene）、相机（camera）和渲染器（renderer）
@@ -161,7 +162,7 @@
      * 注意，模型看不见原因很可能是模型位置在摄像机外，或者相机在模型体内
      */
 
-    var sphere,meshGroup,plane,cube,sun;
+    var sphere,meshGroup,plane,cube,sun,sprite;
     function initMesh(){
         //辅助线
         function drawHelper(){
@@ -193,10 +194,11 @@
 //            )
 //            sphere.position.set(20,4,2);
 //            sphere.castShadow=true;
+            sphere.name='earth';
             scene.add(sphere)
             sphereGemometry = new THREE.SphereGeometry(20,40,40);
             sun = new THREE.Mesh(sphereGemometry,sunMaterial);
-
+            sun.name="sun"
 //            sun.castShadow=true;
             scene.add(sun)
 
@@ -236,12 +238,44 @@
 //         cube.castShadow=true;
            scene.add(cube)
        }
+        function createSpriteText(){
+
+        }
+
+        function drawSprite(){
+            //先用画布将文字画出
+            let canvas = document.createElement("canvas");
+            canvas.width=256;
+            canvas.height=256;
+            let ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffff00";
+            ctx.font = "Bold 100px Arial";
+            ctx.lineWidth = 4;
+            ctx.fillText("地球",4,104);
+//            document.body.appendChild(canvas)
+//            ctx.strokeText("Hello World",4,104);
+            let texture = new THREE.Texture(canvas);
+            texture.flipY=true;
+            texture.mapping=THREE.CubeReflectionMapping
+            texture.needsUpdate = true;
+            //使用Sprite显示文字
+            let material = new THREE.SpriteMaterial({
+                map:texture,
+            });
+            sprite = new THREE.Sprite(material);
+            sprite.scale.set(10,10,1);
+            sprite.position.set(0,13,0);
+            sprite.visible=false;
+            sphere.add(sprite)
+
+        }
 
         drawSphere();
 //        drawPlane();
 //        drawCube();
 //        drawCirle();
         drawHelper();
+        drawSprite();
     }
 
 
@@ -253,7 +287,6 @@
 
     function render(){
         var delta = clock.getDelta();
-        console.log(delta)
          controls.update( delta );
         var cur =Date.now()
         var min = cur-last_time;
@@ -269,6 +302,52 @@
 
     }
 
+    /**
+     * ra
+     */
+    var raycaster,mouse;
+    function intRay(){
+         raycaster = new THREE.Raycaster();
+         mouse = new THREE.Vector2();
+        window.addEventListener( 'click', onMouseMove, false );
+
+    }
+    var selectedObject = null;
+    function onMouseMove( event ) {
+        console.log(event)
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        raycaster.setFromCamera( mouse, camera );
+        // calculate objects intersecting the picking ray
+        var intersects = raycaster.intersectObjects(scene.children );
+        if ( selectedObject ) {
+            selectedObject.visible=true;
+            selectedObject = null;
+        }
+
+        if ( intersects.length > 0 ) {
+
+            var res = intersects.filter( function ( res ) {
+                return res && res.object;
+            } )[ 0 ];
+
+            if ( res && res.object&&res.object.children.length>0 ) {
+                console.log(res.object.children)
+                selectedObject = res.object.children[0];
+                console.log(selectedObject)
+                selectedObject.visible=true;
+            }
+
+        }
+
+    }
+
+
+    /**
+     *
+     *
+     * @type {Raycaster.params.Sprite|{}|string|string|defs.THREE.Sprite|{!url, prototype, !doc, !type}|*}
+     */
 
 
 
